@@ -24,9 +24,9 @@ For additional security, you can use [client assertion](https://tools.ietf.org/h
 
 ## Usage
 ### Configure the strategy
-Notice that the client_secret parameter is not used here. Instead, we pass two parameters:
-1. **pem**: Content of a PEM file that contains the private key and the certificate. The private key is never sent on the wire, instead it's used to sign a JWT that will be eventually send to the Identity provider (AAD) to retrieve the access token.
-2. **fingerprint**: SHA1 base64 representation of the certificate. It's placed in the additional header of the JWT that is signed with the private key
+Notice that the client_secret parameter is not used here. Instead, we pass one parameter:
+
+**pem**: Content of a PEM file that contains the private key and the certificate. The private key is never sent on the wire, instead it's used to sign a JWT that will be eventually send to the Identity provider (AAD) to retrieve the access token.
 
 ```javascript
     passport.use(new AzureAdOAuth2CertStrategy({
@@ -34,7 +34,6 @@ Notice that the client_secret parameter is not used here. Instead, we pass two p
         tokenURL:'https://login.microsoftonline.com/common/oauth2/v2.0/token',
         clientID: '<client Id>',
         callbackURL: '<redirect url>',
-        fingerprint: '<base64 fingerprint string>',
         pem: '<PEM file content>'
     },
         function (accessToken, refresh_token, params, profile, done) {
@@ -88,16 +87,3 @@ app.get('/logout', (req, res) => {
 
 ```
 
-## Obtain the fingerprint
-
-Running this openssl command will get the fingerprint in Hex string format
-```sh
-openssl x509 -in cert.pem -fingerprint -noout
-
-SHA1 Fingerprint=23:A8:18:44:F5:D5:0B:C4:D4:AC:76:9E:5B:1E:A7:57:B6:DA:91:45
-```
-This command will also remove the *SHA1 Fingerprint=* prefix and convert to base64 string
-```sh
-echo $(openssl x509 -in cert.pem -fingerprint -noout) | sed 's/SHA1 Fingerprint=//g' | sed 's/://g' | xxd -r -ps | base64
-
-```
