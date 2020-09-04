@@ -28,5 +28,76 @@ Notice that the client_secret parameter is not used here. Instead, we pass two p
 1. **pem**: Content of a PEM file that contains the private key and the certificate. The private key is never sent on the wire, instead it's used to sign a JWT that will be eventually send to the Identity provider (AAD) to retrieve the access token.
 2. **fingerprint**: SHA1 base64 representation of the certificate. It's placed in the additional header of the JWT that is signed with the private key
 
+```javascript
+    passport.use(new AzureAdOAuth2CertStrategy({
+        authorizationURL: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+        tokenURL:'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+        clientID: '<client Id>',
+        callbackURL: '<redirect url>',
+        fingerprint: '<base64 fingerprint string>',
+        pem: '<PEM file content>'
+    },
+        function (accessToken, refresh_token, params, profile, done) {
+            var decodedToken = jwt.decode(params.id_token);
+            const userProfile = {
+                displayName: decodedToken.name,
+                emails: [{ value: decodedToken.preferred_username.toLowerCase() }],
+                roles: decodedToken.roles,
+                tenantID: decodedToken.tid
+            };
+            done(undefined, userProfile);
+    }));    
 
+```
+Setup route handler for the root of your application that needs to be protected for authorized users only.
 
+```javascript
+app.get('/', (req, res) => {
+    if (!req.isAuthenticated()) {
+        return res.redirect('/auth/azureadoauth2');
+    }
+    return res.render('index', { user: req.user });
+});
+```
+
+Setup route that will be called when authentication is needed
+```javascript
+app.get('/auth/azureadoauth2',
+    passport.authenticate('azure_ad_oauth2_clientcert', authOptions),
+    function (req, res) {
+        res.redirect('/');
+    });
+
+```
+Setup route that will handle the authentication flow after user was authenticated. In this step, we exchange the authorization code with the access token by calling the token endpoint using the client certificate
+
+```javascript
+app.get('/auth/azureadoauth2/callback',
+    passport.authenticate('azure_ad_oauth2_clientcert', { failureRedirect: '/login' }),
+    function (req, res) {
+        res.redirect('/');
+    });
+
+```
+Setup route that will logout the user
+```javascript
+app.get('/logout', (req, res) => {
+    req.logOut();
+    return res.redirect('/');
+});
+
+```
+
+## Obtain the fingerprint
+
+Running this openssl command will get the fingerprint in Hex string format
+```sh
+openssl x509 -in cert.pem -fingerprint -noout
+
+SHA1 Fingerprint=23:A8:18:44:F5:D5:0B:C4:D4:AC:76:9E:5B:1E:A7:57:B6:DA:91:45
+```
+This command will also remove the *SHA1 Fingerprint=* prefix and convert to base64 string
+```sh
+echo $(openssl x509 -in cert.pem -fingerprint -noout) | sed 's/SHA1 Fingerprint=//g' | sed 's/://g' | xxd -r -ps | base64
+
+```
