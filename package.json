@@ -1,5 +1,5 @@
 {
-  "name": "passport-ad-oauth2-clientcert",
+  "name": "passport-azure-ad-oauth2-clientcert",
   "version": "0.1.1",
   "description": "Passport strategy for authenticating with Azure AD using x.509 Client Certificate",
   "main": "index.js",
