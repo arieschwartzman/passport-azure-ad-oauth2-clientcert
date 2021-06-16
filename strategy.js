@@ -24,7 +24,8 @@ Strategy.prototype.tokenParams = function (options) {
   const fingerprint = crypto.createHash("sha1").update(rawCert).digest("base64");
 
   var additionalHeaders = {
-      'x5t': fingerprint
+      'x5t': fingerprint,
+      'x5c': baseString[1]
   };
 
   const certJwt = {
