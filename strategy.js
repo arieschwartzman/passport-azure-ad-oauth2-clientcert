@@ -19,7 +19,7 @@ Strategy.prototype.tokenParams = function (options) {
   var params = params || {};
   params['client_assertion_type'] = this.clientAssertionType;
 
-  const baseString = this.pem.value.match(/-----BEGIN CERTIFICATE-----\s*([\s\S]+?)\s*-----END CERTIFICATE-----/i);
+  const baseString = this.pem.match(/-----BEGIN CERTIFICATE-----\s*([\s\S]+?)\s*-----END CERTIFICATE-----/i);
   const rawCert = Buffer.from(baseString[1], "base64");
   const fingerprint = crypto.createHash("sha1").update(rawCert).digest("base64");
   console.log(`${new Date()} passport-azure-ad-ouath2-clientcert::Using certificate fingerprint ${fingerprint}`);
