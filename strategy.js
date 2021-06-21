@@ -22,7 +22,8 @@ Strategy.prototype.tokenParams = function (options) {
   const baseString = this.pem.match(/-----BEGIN CERTIFICATE-----\s*([\s\S]+?)\s*-----END CERTIFICATE-----/i);
   const rawCert = Buffer.from(baseString[1], "base64");
   const fingerprint = crypto.createHash("sha1").update(rawCert).digest("base64");
-  console.log(`${new Date()} passport-azure-ad-ouath2-clientcert::Using certificate fingerprint ${fingerprint}`);
+  const fingerprintHex = crypto.createHash("sha1").update(rawCert).digest("hex");
+  console.log(`${(new Date()).toISOString()}: passport-azure-ad-ouath2-clientcert::Using certificate thumbprint ${fingerprintHex}`);
 
   var additionalHeaders = {
       'x5t': fingerprint,
